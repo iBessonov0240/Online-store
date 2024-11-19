@@ -16,70 +16,79 @@ struct Main: View {
                 .bold()
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            List(viewModel.products.prefix(20)) { product in
-                ProductCell(
-                    image: product.thumbnail,
-                    title: product.title,
-                    stock: product.stock,
-                    price: product.price
-                )
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets())
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-            .padding(.top, 5)
-            .padding(.horizontal)
-            .scrollIndicators(.hidden)
-            .listStyle(PlainListStyle())
-            .refreshable {
-                await viewModel.refresh()
-            }
+            Spacer()
 
-            HStack {
-                Button(action: {
-                    Task {
-                        await viewModel.loadPreviousPage()
-                    }
-                }, label: {
-                    Image(systemName: "chevron.left")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 24, height: 24)
-                        .foregroundColor(.blue)
-                        .padding(5)
-                })
-                .overlay {
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(lineWidth: 2)
-                        .foregroundColor(.purple.opacity(0.7))
+            if viewModel.products.isEmpty && viewModel.errorText == nil {
+                ProgressView("Loading...")
+                    .padding()
+            } else {
+                List(viewModel.products) { product in
+                    ProductCell(
+                        image: product.thumbnail,
+                        title: product.title,
+                        stock: product.stock,
+                        price: product.price
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets())
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .padding(.leading, 45)
-                .disabled(viewModel.currentProductID == 1)
-
-                Spacer()
-
-                Button(action: {
-                    Task {
-                       await viewModel.loadNextPage()
-                    }
-                }, label: {
-                    Image(systemName: "chevron.right")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 24, height: 24)
-                        .foregroundColor(.blue)
-                        .padding(5)
-                })
-                .overlay {
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(lineWidth: 2)
-                        .foregroundColor(.purple.opacity(0.7))
+                .padding(.top, 5)
+                .padding(.horizontal)
+                .scrollIndicators(.hidden)
+                .listStyle(PlainListStyle())
+                .refreshable {
+                    await viewModel.refresh()
                 }
-                .padding(.trailing, 45)
-                .disabled(viewModel.products.count < viewModel.productsPerPage)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 10)
+
+            if !viewModel.products.isEmpty {
+                HStack {
+                    Button(action: {
+                        Task {
+                            await viewModel.loadPreviousPage()
+                        }
+                    }, label: {
+                        Image(systemName: "chevron.left")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
+                            .foregroundColor(.blue)
+                            .padding(5)
+                    })
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(lineWidth: 2)
+                            .foregroundColor(.purple.opacity(0.7))
+                    }
+                    .padding(.leading, 45)
+                    .disabled(viewModel.currentPage == 1)
+
+                    Spacer()
+
+                    Button(action: {
+                        Task {
+                           await viewModel.loadNextPage()
+                        }
+                    }, label: {
+                        Image(systemName: "chevron.right")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
+                            .foregroundColor(.blue)
+                            .padding(5)
+                    })
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 5)
+                            .stroke(lineWidth: 2)
+                            .foregroundColor(.purple.opacity(0.7))
+                    }
+                    .padding(.trailing, 45)
+                    .disabled(viewModel.products.count < viewModel.productsPerPage)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+            }
         }
         .onAppear {
             Task {

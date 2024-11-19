@@ -7,7 +7,7 @@ final class MainViewModel: ObservableObject {
     @Published var products: [ProductModel] = []
     @Published var errorText: String?
     var productsPerPage = 20
-    var currentProductID = 1
+    var currentPage = 1
     private var fetchTask: Task<Void, Never>?
 
     // MARK: - Functions
@@ -18,10 +18,18 @@ final class MainViewModel: ObservableObject {
 
         fetchTask = Task {
             do {
-                let products = try await APIManager.shared.fetchProducts(startID: currentProductID, count: productsPerPage)
+                let products = try await APIManager.shared.fetchProducts(
+                    startID: (currentPage - 1) * productsPerPage + 1,
+                    count: productsPerPage
+                )
+
+                guard !Task.isCancelled else { return }
+
                 self.errorText = nil
                 self.products = Array(products.prefix(20))
             } catch {
+                guard !Task.isCancelled else { return }
+
                 let networkError = NetworkError(error: error)
                 self.errorText = networkError.rawValue
             }
@@ -35,13 +43,13 @@ final class MainViewModel: ObservableObject {
 
     @MainActor
     func loadNextPage() async {
-        currentProductID += productsPerPage
+        currentPage += 1
         await fetchProducts()
     }
 
     @MainActor
     func loadPreviousPage() async {
-        currentProductID = max(1, currentProductID - productsPerPage)
+        currentPage = max(1, currentPage - 1)
         await fetchProducts()
     }
 }
